@@ -53,6 +53,12 @@ def _default_compute_score(data_source, solution_str, ground_truth, extra_info=N
         from . import geo3k
 
         res = geo3k.compute_score(solution_str, ground_truth)
+
+    elif data_source in ["mind_rec"]:
+        from . import seq_rec
+
+        res = seq_rec.compute_score(solution_str, ground_truth, data_source)
+
     else:
         raise NotImplementedError(f"Reward function is not implemented for {data_source=}")
 

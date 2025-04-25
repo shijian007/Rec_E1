@@ -23,6 +23,14 @@ import ray
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer
 from verl.trainer.ppo.reward import load_reward_manager
 
+def _select_rm_score_fn(data_source):
+    if 'mind_rec' in data_source:
+        from verl.utils.reward_score import mindrec
+        return mindrec.compute_score
+
+    else:
+        raise NotImplementedError
+
 
 def get_custom_reward_fn(config):
     import importlib.util
