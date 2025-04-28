@@ -13,11 +13,11 @@ sys.path.append('./')
 from src.Lucene.mindrec.search_docs import PyseriniMultiFieldSearch
 
 index_dir_dict = {
-    'mind_rec': '/opt/data2/xiezhijun/code/Rec-R1/database/rl_rec/mind_small_153k_v1_0423/pyserini_index',
+    'mindsmall_rec': '/opt/data2/xiezhijun/code/Rec-R1/database/rl_rec/mind_small_153k_v1_0423/pyserini_index',
 }
 try:
     search_system_dict = {
-        'mind_rec': PyseriniMultiFieldSearch(index_dir=index_dir_dict['mind_rec']),
+        'mindsmall_rec': PyseriniMultiFieldSearch(index_dir=index_dir_dict['mindsmall_rec']),
     }
 except Exception as e:
     print(e)
@@ -56,6 +56,7 @@ def recall_at_k(retrieved_list, target_list, k):
 def extract_solution(solution_str):
     """Extract the equation from the solution string."""
     # Remove everything before the first "Assistant:"
+    print('=== solution_str:', solution_str)
     if "Assistant:" in solution_str:
         processed_str = solution_str.split("Assistant:", 1)[1].strip()
     elif "<|im_start|>assistant" in solution_str:
@@ -188,30 +189,24 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
     """
 
     label = str(ground_truth['target'])
-
     answer_text, processed_str = extract_solution(solution_str)
-
     do_print = random.randint(1, 32) == 1
 
     # Validate response structure
     response_format_correct = validate_response_structure(processed_str, do_print)
     json_format_correct = check_json_format(answer_text, do_print)
     format_correct = response_format_correct and json_format_correct
-
     format_score = format_reward if format_correct else -2
-    # if do_print:
-    #     print(f"\n  Format validation: {'PASS' if format_correct else 'FAIL'}")
-    #     print(f"Format score: {format_score}")
 
     if do_print:
         print(f"--------------------------------")
         print(f"[Solution string]: {solution_str}")
         print(f"[Target]: {label}")
 
-    if 'mind_rec' in data_source:
-        domain_name = 'mind_rec'
+    if 'mindsmall' in data_source:
+        domain_name = 'mindsmall_rec'
 
-    if 'test' in data_source or 'dev' in data_source:
+    if 'test' in data_source or 'dev' in data_source or 'val' in data_source:
         top_k = 50
     else:
         top_k = 5000
@@ -240,7 +235,7 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
 
 
 if __name__ == '__main__':
-    data_source = 'emrec'
+    data_source = 'mindsmall_rec'
     json_string = '{"query": "证监会 AND IPO战略配售政策"}'
 
     solution_str = """<|im_start|>assistant: Here is the answer to your question: <think> </think> <answer>{"query": "(NOT \\"3-Pack Replacement for Whirlpool\\") AND Amazon home"}</answer>
