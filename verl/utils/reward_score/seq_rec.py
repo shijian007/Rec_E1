@@ -13,7 +13,7 @@ sys.path.append('./')
 from src.Lucene.mindrec.search_docs import PyseriniMultiFieldSearch
 
 index_dir_dict = {
-    'mindsmall_rec': '/opt/data2/xiezhijun/code/Rec-R1/database/rl_rec/mind_small_153k_v1_0423/pyserini_index',
+    'mindsmall_rec': 'Your pyserini_index path',
 }
 try:
     search_system_dict = {
@@ -21,7 +21,7 @@ try:
     }
 except Exception as e:
     print(e)
-    print('Please build the index first:')
+    print('[Error] Please build the index first:')
 
 
 def dcg_at_k(retrieved, target, k):
@@ -52,11 +52,10 @@ def recall_at_k(retrieved_list, target_list, k):
     recall = len(retrieved_relevant) / len(set(target_list))
     return recall
 
-
-def extract_solution(solution_str):
+# rec-r1
+'''def extract_solution(solution_str):
     """Extract the equation from the solution string."""
     # Remove everything before the first "Assistant:"
-    print('=== solution_str:', solution_str)
     if "Assistant:" in solution_str:
         processed_str = solution_str.split("Assistant:", 1)[1].strip()
     elif "<|im_start|>assistant" in solution_str:
@@ -74,7 +73,19 @@ def extract_solution(solution_str):
         return matches[-1].strip(), processed_str  # Return the last matched answer
     else:
         print("[Error] No valid answer tags found")
-        return None, processed_str
+        return None, processed_str'''
+
+def extract_solution(solution_str):
+    """Extract the equation from the solution string."""
+    # Regular expression to find the last occurrence of <answer>...</answer>
+    answer_pattern = r'<answer>(.*?)</answer>'
+    matches = re.findall(answer_pattern, solution_str, re.DOTALL)  # Use re.DOTALL to match multiline content
+
+    if matches:
+        return matches[-1].strip(), solution_str  # Return the last matched answer
+    else:
+        print("[Error] No valid answer tags found")
+        return None, solution_str
 
 
 def validate_response_structure(processed_str: str, do_print: bool) -> bool:
