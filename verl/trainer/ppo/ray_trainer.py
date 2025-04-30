@@ -915,7 +915,7 @@ class RayPPOTrainer:
         # currently, we only support validation using the reward_function.
         if self.val_reward_fn is not None and self.config.trainer.get("val_before_train", True):
             val_metrics = self._validate()
-            pprint(f"Initial validation metrics: {val_metrics}")
+            pprint(f"====> Initial validation metrics: {val_metrics}")
             logger.log(data=val_metrics, step=self.global_steps)
             if self.config.trainer.get("val_only", False):
                 return
@@ -929,7 +929,7 @@ class RayPPOTrainer:
 
         for epoch in range(self.config.trainer.total_epochs):
             for batch_dict in self.train_dataloader:
-                print(f'------------------- epoch {epoch}, step {self.global_steps} ---------------------')
+                pprint(f'------------------- epoch {epoch}, step {self.global_steps} ---------------------')
                 metrics = {}
                 timing_raw = {}
 
@@ -1072,7 +1072,7 @@ class RayPPOTrainer:
                         actor_output_metrics = reduce_metrics(actor_output.meta_info["metrics"])
                         metrics.update(actor_output_metrics)
 
-                    # reward metrics
+                    # calc reward rule metrics
                     metrics.update(compute_reward_metrics(batch))
 
                     # validate
@@ -1081,11 +1081,13 @@ class RayPPOTrainer:
                         and self.config.trainer.test_freq > 0
                         and (is_last_step or self.global_steps % self.config.trainer.test_freq == 0)
                     ):
+                        pprint(f"====> start validate <====")
                         with _timer("testing", timing_raw):
                             val_metrics: dict = self._validate()
                             if is_last_step:
                                 last_val_metrics = val_metrics
                         metrics.update(val_metrics)
+                        pprint(f"====> validate end <====")
 
                     if self.config.trainer.save_freq > 0 and (
                         is_last_step or self.global_steps % self.config.trainer.save_freq == 0
@@ -1104,7 +1106,7 @@ class RayPPOTrainer:
                 logger.log(data=metrics, step=self.global_steps)
 
                 if is_last_step:
-                    pprint(f"Final validation metrics: {last_val_metrics}")
+                    pprint(f"====> Final validation metrics: {last_val_metrics}")
                     progress_bar.close()
                     return
 

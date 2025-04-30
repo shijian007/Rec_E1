@@ -6,7 +6,6 @@ export DATA_DIR=./data/mindsmall/mindsmall
 export ROLLOUT_TP_SIZE=1
 export PROJECT_NAME=Rec-E1
 export EXPERIMENT_NAME=mindsmall-qwen-1d5b-grpo
-export VLLM_ATTENTION_BACKEND=XFORMERS
 export WANDB_API_KEY=" YOUR WANDB_API_KEY"
 export CUDA_VISIBLE_DEVICES=0
 export PYTHONUNBUFFERED=1

@@ -10,7 +10,7 @@ Rec-E1 是对 Rec-R1 实验的扩展，包含以下升级点：
 ```bash
 conda create -n zero python=3.10
 
-# verl 当前版本 0.2.0.dev
+# verl 当前版本 0.3
 pip install -e .
 
 # vllm 当前版本 0.8.4
@@ -66,19 +66,11 @@ conda activate zero
 
 **1.5B model**
 ```
-export N_GPUS=1
-export BASE_MODEL=Qwen/Qwen2.5-1.5B-Instruct
-export DATA_DIR=data/matching/qwen-instruct
-export ROLLOUT_TP_SIZE=1
-export EXPERIMENT_NAME=matching-qwen2.5-3b-inst-grpo
-export WANDB_API_KEY="[Your_key]"
-export CUDA_VISIBLE_DEVICES=0
-
 bash scripts/run_train_qwen_1d5b_mind_small.sh
 ```
 
 
-## Acknowledgements
+## 致谢
 - [Rec_R1](https://github.com/linjc16/Rec-R1) 🔗
 - [Verl](https://github.com/volcengine/verl) 🔗
 - [Pyserini](https://github.com/castorini/pyserini) 🔗
