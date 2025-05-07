@@ -13,7 +13,7 @@ sys.path.append('./')
 from src.Lucene.mindrec.search_docs import PyseriniMultiFieldSearch
 
 index_dir_dict = {
-    'mindsmall_rec': 'Your pyserini_index path',
+    'mindsmall_rec': './data/mindsmall/mindsmall/pyserini_index',
 }
 try:
     search_system_dict = {
@@ -201,7 +201,7 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
 
     label = str(ground_truth['target'])
     answer_text, processed_str = extract_solution(solution_str)
-    do_print = random.randint(1, 32) == 1
+    do_print = random.randint(1, 8) == 1
 
     # Validate response structure
     response_format_correct = validate_response_structure(processed_str, do_print)

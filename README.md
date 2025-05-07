@@ -1,9 +1,10 @@
 # REC-E1 
-Rec-E1 是对 Rec-R1 实验的扩展，包含以下升级点：
+Rec-E1 是对 [Rec-R1](https://github.com/linjc16/Rec-R1) 实验的扩展，包含以下升级点：
 - 升级了veRL版本，从v0.1 升级为 v0.3
-- 升级actor模型为Qwen3（2025-04-29开源）
-- 更换了实验数据集，从Rec-R1实验使用的Amazon电商数据集，更换为微软开源的新闻数据集MIND-small
+- [todo]升级搜索数据库为ElasticSearch
+- 更换了实验数据集，从Rec-R1实验使用的 [Amazon电商数据集](https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023) ，更换为微软开源的新闻数据集[MIND-small](https://msnews.github.io/)
 - 修复了部分install问题
+
 
 ## Installation
 
