@@ -60,7 +60,7 @@ def _default_compute_score(data_source, solution_str, ground_truth, extra_info=N
         res = seq_rec.compute_score(solution_str, ground_truth, data_source)
 
     # model response with <think>...</think>
-    elif data_source in ["mindsmall_rec_r1"]:
+    elif "mindsmall_rec_r1" in data_source:
         from . import seq_rec_r1
 
         res = seq_rec_r1.compute_score(solution_str, ground_truth, data_source)

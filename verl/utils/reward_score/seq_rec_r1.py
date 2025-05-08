@@ -11,6 +11,7 @@ import sys
 sys.path.append('./')
 
 from src.Lucene.mindrec.search_docs import PyseriniMultiFieldSearch
+from src.Lucene.mindrec.es_search_docs import ESClient
 
 index_dir_dict = {
     'mindsmall_rec_r1': './data/mindsmall/mindsmall/pyserini_index',
@@ -18,6 +19,7 @@ index_dir_dict = {
 try:
     search_system_dict = {
         'mindsmall_rec_r1': PyseriniMultiFieldSearch(index_dir=index_dir_dict['mindsmall_rec_r1']),
+        'mindsmall_rec_r1_es': ESClient(),
     }
 except Exception as e:
     print(e)
@@ -141,7 +143,7 @@ def check_json_format(json_str, do_print=False):
 
 def retriver_items(query, domain_name, top_k=3000, threads=16):
     """Retrieve items from the search system."""
-    results = search_system_dict[domain_name].batch_search([query], top_k=top_k, threads=threads)
+    results = search_system_dict[domain_name].batch_search([query], top_k, threads)
     return results
 
 
@@ -195,6 +197,8 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
 
     if 'mindsmall_rec_r1' in data_source:
         domain_name = 'mindsmall_rec_r1'
+    if 'mindsmall_rec_r1_es' in data_source:
+        domain_name = 'mindsmall_rec_r1_es'
 
     if 'test' in data_source or 'dev' in data_source or 'val' in data_source:
         top_k = 50
