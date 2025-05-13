@@ -251,7 +251,7 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
 def compute_reward_metrics(batch):
     reward_tensor = batch.batch['token_level_scores'].sum(-1)
 
-    format_score = 0.1
+    format_score = 1
 
     reward_metrics = {}
     reward_metrics["reward/mean"] = torch.mean(reward_tensor).detach().item()

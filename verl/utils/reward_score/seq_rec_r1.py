@@ -13,12 +13,9 @@ sys.path.append('./')
 from src.Lucene.mindrec.search_docs import PyseriniMultiFieldSearch
 from src.Lucene.mindrec.es_search_docs import ESClient
 
-index_dir_dict = {
-    'mindsmall_rec_r1': './data/mindsmall/mindsmall/pyserini_index',
-}
 try:
     search_system_dict = {
-        'mindsmall_rec_r1': PyseriniMultiFieldSearch(index_dir=index_dir_dict['mindsmall_rec_r1']),
+        'mindsmall_rec_r1': PyseriniMultiFieldSearch(),
         'mindsmall_rec_r1_es': ESClient(),
     }
 except Exception as e:
@@ -147,16 +144,13 @@ def retriver_items(query, domain_name, top_k=3000, threads=16):
     return results
 
 
-def calculate_answer_score(json_str, label, topk, domain_name):
+def calculate_answer_score(query, label, topk, domain_name):
     """Calculate answer score based on final_prediction idx."""
     try:
-        data = json.loads(json_str)
-        query = data['query']
-        print("[Query] ", query)
         target = label
         # print("[Target] ", target)
         results = retriver_items(query, domain_name, top_k=topk, threads=32)
-        asin_results = [item[0] for item in results[query]]
+        asin_results = [item[0] for item in results]
         # print("[asin_results] ", asin_results)
         answer_score = ndcg_at_k(asin_results, target, topk)
         print("[NDCG] ", answer_score)
@@ -168,6 +162,146 @@ def calculate_answer_score(json_str, label, topk, domain_name):
 
     return answer_score
 
+# multi_match的 "type"为 "best_fields", 对每个字段独立执行分词后的词项匹配（类似 match 查询），取各字段中最高评分的结果
+def convert_query_to_es(query):
+    # 初始化must和should列表
+    must = []
+    should = []
+
+    # 按AND分割条件组
+    and_groups = re.split(r'\s+AND\s+', query.strip())
+
+    for group in and_groups:
+        # 按OR分割关键词
+        or_keywords = re.split(r'\s+OR\s+', group.strip())
+        if len(or_keywords) == 1:
+            must.append(or_keywords[0])
+        else:
+            should.extend(or_keywords)
+    # print("must:\n", must)
+    # print("should:\n", should)
+    # 构建Elasticsearch查询结构
+    es_query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": keyword,
+                            "fields": ["title^1.0", "abstract^1.0"],
+                            "type": "best_fields"
+                        }
+                    } for keyword in must
+                ],
+                "should": [
+                    {
+                        "multi_match": {
+                            "query": keyword,
+                            "fields": ["title^1.0", "abstract^1.0"],
+                            "type": "best_fields"
+                        }
+                    } for keyword in should
+                ],
+                "minimum_should_match": 1 if should else 0
+            }
+        }
+    }
+
+    return es_query
+
+
+# multi_match的 "type"为 "phrase", 对每个字段执行严格短语匹配（类似 match_phrase 查询），要求词序完全一致
+def convert_query_to_es_v2(query):
+    # 初始化must和should列表
+    must = []
+    should = []
+
+    # 按AND分割条件组
+    and_groups = re.split(r'\s+AND\s+', query.strip())
+
+    for group in and_groups:
+        # 按OR分割关键词
+        or_keywords = re.split(r'\s+OR\s+', group.strip())
+        if len(or_keywords) == 1:
+            must.append(or_keywords[0])
+        else:
+            should.extend(or_keywords)
+
+    # 构建Elasticsearch查询结构
+    es_query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": keyword,
+                            "fields": ["title^1.0", "abstract^1.0"],
+                            "type": "phrase"
+                        }
+                    } for keyword in must
+                ],
+                "should": [
+                    {
+                        "multi_match": {
+                            "query": keyword,
+                            "fields": ["title^1.0", "abstract^1.0"],
+                            "type": "phrase"
+                        }
+                    } for keyword in should
+                ],
+                "minimum_should_match": 1 if should else 0
+            }
+        }
+    }
+
+    return es_query
+
+
+# multi_match的 "type"为 "phrase", 对每个字段执行严格短语匹配（类似 match_phrase 查询），要求词序完全一致，面向content，非title和abstract
+def convert_query_to_es_v3(query):
+    # 初始化must和should列表
+    must = []
+    should = []
+
+    # 按AND分割条件组
+    and_groups = re.split(r'\s+AND\s+', query.strip())
+
+    for group in and_groups:
+        # 按OR分割关键词
+        or_keywords = re.split(r'\s+OR\s+', group.strip())
+        if len(or_keywords) == 1:
+            must.append(or_keywords[0])
+        else:
+            should.extend(or_keywords)
+
+    # 构建Elasticsearch查询结构
+    es_query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": keyword,
+                            "fields": "content",
+                            "type": "phrase"
+                        }
+                    } for keyword in must
+                ],
+                "should": [
+                    {
+                        "multi_match": {
+                            "query": keyword,
+                            "fields": "content",
+                            "type": "phrase"
+                        }
+                    } for keyword in should
+                ],
+                "minimum_should_match": 1 if should else 0
+            }
+        }
+    }
+
+    return es_query
 
 def compute_score(solution_str, ground_truth, data_source, format_reward=1):
     """The scoring function for countdown task.
@@ -183,6 +317,8 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
     label = str(ground_truth['target'])
     answer_text, processed_str = extract_solution(solution_str)
     do_print = random.randint(1, 8) == 1
+    use_convert_es = True
+    # do_print = True
 
     # Validate response structure
     response_format_correct = validate_response_structure(processed_str, do_print)
@@ -195,10 +331,18 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
         print(f"[Solution string]: {solution_str}")
         print(f"[Target]: {label}")
 
-    if 'mindsmall_rec_r1' in data_source:
+    is_check = False
+    if 'mindsmall_rec_r1' == data_source and not is_check:
         domain_name = 'mindsmall_rec_r1'
-    if 'mindsmall_rec_r1_es' in data_source:
+        if use_convert_es:
+            domain_name = 'mindsmall_rec_r1_es'
+        is_check = True
+    elif 'mindsmall_rec_r1_es' == data_source and not is_check:
         domain_name = 'mindsmall_rec_r1_es'
+        use_convert_es = False
+        is_check = True
+    else:
+        print('== data_source type Error ==')
 
     if 'test' in data_source or 'dev' in data_source or 'val' in data_source:
         top_k = 50
@@ -207,7 +351,11 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
 
     answer_score = 0
     if format_correct and answer_text:
-        answer_score = calculate_answer_score(answer_text, label, top_k, domain_name) * 10
+        query = json.loads(answer_text)['query']
+        if use_convert_es:
+            query = convert_query_to_es_v3(query)['query']
+            print(f"[ES_Query]: {query}")
+        answer_score = calculate_answer_score(query, label, top_k, domain_name) * 10
 
     if answer_score > 0:
         total_score = format_score + answer_score

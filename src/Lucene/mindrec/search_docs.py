@@ -3,30 +3,11 @@ from pyserini.search.lucene import LuceneSearcher
 import time
 import pdb
 
-'''
-index_dir = '/opt/data2/xiezhijun/code/Rec-R1/database/amazon_review/All_Beauty/pyserini_index'
-searcher = LuceneSearcher(index_dir)
-searcher.set_bm25(1.2, 0.75)
 
-raw_query = "3-Pack Replacement for Whirlpool AND Amazon home"
-query = f"contents:{raw_query}"
-
-hits = searcher.search(query, k=10)
-
-
-doc_id = hits[0].docid
-doc = eval(searcher.doc(doc_id).raw())
-title = doc["title"]
-
-
-doc_id = hit.docid
-contents = eval(searcher.doc(hit.docid).raw())["contents"]
-
-'''
-
+pyserini_index_path = 'path-to-dir/pyserini_index'
 
 class PyseriniMultiFieldSearch:
-    def __init__(self, index_dir="pyserini_index"):
+    def __init__(self, index_dir=pyserini_index_path):
         """Initialize Pyserini MultiField Searcher"""
         self.searcher = LuceneSearcher(index_dir)
         self.searcher.set_bm25(1.2, 0.75)  # Set BM25 scoring for ranking
@@ -79,16 +60,14 @@ class PyseriniMultiFieldSearch:
         )
         
         # Format results as {query: [(parent_asin, title, score), ...]}
-        final_results = {}
+        formatted_results = []
         for i, query in enumerate(queries):
             hits = results_dict[str(i)]  # Get results for query `i`
             formatted_results = [
                 (hit.docid, eval(self.searcher.doc(hit.docid).raw())["contents"], hit.score)
                 for hit in hits
             ]
-            final_results[query] = formatted_results
-
-        return final_results
+        return formatted_results
 
 
 # Example Usage

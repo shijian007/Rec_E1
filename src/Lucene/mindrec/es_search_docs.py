@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 class Config:
-    ES_HOSTS = ["http://es:9200"]
+    ES_HOSTS = ["http://127.0.0.1:9200"]
     INDEX = "mindsmall_test"
 
 
@@ -50,7 +50,8 @@ class ESClient:
 
     """search"""
     def batch_search(self, queries, size=50, thread=1):
-        query = queries[0]
+        query = {}
+        query['query'] = queries[0]
         query['_source'] = ['itemid']
         query['size'] = size
         query['sort'] = [{"_score": {"order": "desc"}}]
@@ -58,7 +59,7 @@ class ESClient:
         try:
             res = self.es.search(index=self.index, body=query)
             ret = [hit["_source"] for hit in res["hits"]["hits"]]
-            return {"query": [[item['itemid']] for item in ret]}
+            return [[item['itemid']] for item in ret]
         except Exception as e:
             logging.error(f"搜索失败: {str(e)}")
             return []
@@ -71,25 +72,15 @@ if __name__ == '__main__':
 
     # search
     query = {
-              "query": {
-                "bool": {
-                  "should": [
+                "query": {
                     {
-                      "multi_match": {
-                        "query": "celebrity personal legal family health tv",
-                        "fields": ["title", "abstract"]
-                      }
-                    },
-                    {
-                      "terms": {
-                        "tag": ["entertainment", "news", "lifestyle", "health", "tv", "movies"]
-                      }
+                        "multi_match": {
+                            "query": "Trump Trump administration official book deal Russia investigation Biden Ukrainian president false claim investigation witness news",
+                            "fields": ["title^1.5", "abstract^1.2", "tag"]
+                        }
                     }
-                  ],
-                  "minimum_should_match": 1
                 }
-              }
             }
-    res = client.batch_search(query)
+    res = client.batch_search([query])
     print(res)
 
