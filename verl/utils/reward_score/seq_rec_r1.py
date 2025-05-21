@@ -12,11 +12,13 @@ sys.path.append('./')
 
 from src.Lucene.mindrec.search_docs import PyseriniMultiFieldSearch
 from src.Lucene.mindrec.es_search_docs import ESClient
+from src.Lucene.mindrec.search_bm25s import BM25SModel
 
 try:
     search_system_dict = {
         'mindsmall_rec_r1': PyseriniMultiFieldSearch(),
         'mindsmall_rec_r1_es': ESClient(),
+        'mindsmall_rec_r1_bm25s': BM25SModel(),
     }
 except Exception as e:
     print(e)
@@ -162,7 +164,7 @@ def calculate_answer_score(query, label, topk, domain_name):
 
     return answer_score
 
-# multi_match的 "type"为 "best_fields", 对每个字段独立执行分词后的词项匹配（类似 match 查询），取各字段中最高评分的结果
+# multi_match的 "type"为 "best_fields", 取各字段中最高评分的结果, 面向title和abstract
 def convert_query_to_es(query):
     # 初始化must和should列表
     must = []
@@ -210,7 +212,7 @@ def convert_query_to_es(query):
     return es_query
 
 
-# multi_match的 "type"为 "phrase", 对每个字段执行严格短语匹配（类似 match_phrase 查询），要求词序完全一致
+# multi_match的 "type"为 "phrase"，要求词序完全一致, 面向title和abstract
 def convert_query_to_es_v2(query):
     # 初始化must和should列表
     must = []
@@ -257,7 +259,7 @@ def convert_query_to_es_v2(query):
     return es_query
 
 
-# multi_match的 "type"为 "phrase", 对每个字段执行严格短语匹配（类似 match_phrase 查询），要求词序完全一致，面向content，非title和abstract
+# multi_match的 "type"为 "phrase", 要求词序完全一致，面向content
 def convert_query_to_es_v3(query):
     # 初始化must和should列表
     must = []
@@ -303,6 +305,7 @@ def convert_query_to_es_v3(query):
 
     return es_query
 
+
 def compute_score(solution_str, ground_truth, data_source, format_reward=1):
     """The scoring function for countdown task.
 
@@ -318,6 +321,7 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
     answer_text, processed_str = extract_solution(solution_str)
     do_print = random.randint(1, 8) == 1
     use_convert_es = True
+    use_convert_bm25s = False
     # do_print = True
 
     # Validate response structure
@@ -336,6 +340,8 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
         domain_name = 'mindsmall_rec_r1'
         if use_convert_es:
             domain_name = 'mindsmall_rec_r1_es'
+        if use_convert_bm25s:
+            domain_name = 'mindsmall_rec_r1_bm25s'
         is_check = True
     elif 'mindsmall_rec_r1_es' == data_source and not is_check:
         domain_name = 'mindsmall_rec_r1_es'
@@ -355,6 +361,10 @@ def compute_score(solution_str, ground_truth, data_source, format_reward=1):
         if use_convert_es:
             query = convert_query_to_es_v3(query)['query']
             print(f"[ES_Query]: {query}")
+        if use_convert_bm25s:
+            print(f"[BM25S_Query]: {query}")
+        else:
+            print(f"[Pyserini_Query]: {query}")
         answer_score = calculate_answer_score(query, label, top_k, domain_name) * 10
 
     if answer_score > 0:

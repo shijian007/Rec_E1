@@ -1,9 +1,9 @@
 # REC-E1 
 Rec-E1 是对 [Rec-R1](https://github.com/linjc16/Rec-R1) 实验的扩展，包含以下升级点：
-- 升级了veRL版本，从v0.1 升级为 v0.3
-- [todo]升级搜索数据库为ElasticSearch
+- 升级了veRL版本，从v0.1 升级为 v0.3，支持更多强化学习算法
+- 增加搜索数据库ElasticSearch和BM25S
 - 更换了实验数据集，从Rec-R1实验使用的 [Amazon电商数据集](https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023) ，更换为微软开源的新闻数据集[MIND-small](https://msnews.github.io/)
-- 修复了部分install问题
+- 为支持最新Pyserini，修复了部分install问题
 
 
 ## Installation
